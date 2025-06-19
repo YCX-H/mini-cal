@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级科学计算器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet" type="text/css" />
+    <style>
+        .calculator-container {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        .display-bg {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+        }
+        .sci-btn {
+            background: rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: white;
+            transition: all 0.2s ease;
+        }
+        .sci-btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateY(-2px);
+        }
+        .num-btn {
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.2s ease;
+        }
+        .num-btn:hover {
+            background: white;
+            transform: translateY(-2px);
+        }
+        .op-btn {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            transition: all 0.2s ease;
+        }
+        .op-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+        .eq-btn {
+            background: #ff6b6b;
+            color: white;
+            transition: all 0.2s ease;
+        }
+        .eq-btn:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+        .func-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.2s ease;
+        }
+        .func-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        .display-text {
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        @media (max-width: 768px) {
+            .btn {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 bg-gray-100">
+    <div class="calculator-container w-full max-w-md">
+        <div class="card-body p-6">
+            <div class="text-center mb-4">
+                <h1 class="text-3xl font-bold text-white mb-1">科学计算器</h1>
+                            </div>
+            
+            <!-- 显示屏 -->
+            <div class="display-bg rounded-xl p-4 mb-6 shadow-inner">
+                <div id="operation" class="text-right text-sm text-gray-600 h-6 mb-1 font-mono"></div>
+                <div id="display" class="text-right text-4xl font-bold text-gray-800 h-12 overflow-x-auto font-mono display-text">0</div>
+            </div>
+            
+            <!-- 计算器按钮区 -->
+            <div class="grid grid-cols-5 gap-3">
+                <!-- 科学函数 -->
+                <button class="btn sci-btn" onclick="inputFunction('sin')">sin</button>
+                <button class="btn sci-btn" onclick="inputFunction('cos')">cos</button>
+                <button class="btn sci-btn" onclick="inputFunction('tan')">tan</button>
+                <button class="btn sci-btn" onclick="inputFunction('√')">√</button>
+                <button class="btn sci-btn" onclick="inputFunction('π')">π</button>
+                
+                <!-- 功能按钮 -->
+                <button class="btn func-btn" onclick="clearAll()">AC</button>
+                <button class="btn func-btn" onclick="backspace()">DEL</button>
+                <button class="btn func-btn" onclick="inputOperator('%')">%</button>
+                <button class="btn op-btn" onclick="inputOperator('÷')">÷</button>
+                <button class="btn op-btn" onclick="inputOperator('×')">×</button>
+                
+                <!-- 数字和操作符 -->
+                <button class="btn num-btn" onclick="inputDigit(7)">7</button>
+                <button class="btn num-btn" onclick="inputDigit(8)">8</button>
+                <button class="btn num-btn" onclick="inputDigit(9)">9</button>
+                <button class="btn op-btn" onclick="inputOperator('-')">-</button>
+                <button class="btn sci-btn" onclick="inputFunction('^')">x^y</button>
+                
+                <button class="btn num-btn" onclick="inputDigit(4)">4</button>
+                <button class="btn num-btn" onclick="inputDigit(5)">5</button>
+                <button class="btn num-btn" onclick="inputDigit(6)">6</button>
+                <button class="btn op-btn" onclick="inputOperator('+')">+</button>
+                <button class="btn sci-btn" onclick="inputFunction('1/x')">1/x</button>
+                
+                <button class="btn num-btn" onclick="inputDigit(1)">1</button>
+                <button class="btn num-btn" onclick="inputDigit(2)">2</button>
+                <button class="btn num-btn" onclick="inputDigit(3)">3</button>
+                <button class="btn eq-btn col-span-2" onclick="calculate()">=</button>
+                
+                <button class="btn num-btn col-span-2" onclick="inputDigit(0)">0</button>
+                <button class="btn num-btn" onclick="inputDecimal()">.</button>
+                <button class="btn sci-btn" onclick="inputFunction('±')">±</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 状态变量
+        let currentInput = '0';
+        let operationExpression = '';
+        let isCalculated = false;
+        
+        // DOM元素
+        const displayElement = document.getElementById('display');
+        const operationElement = document.getElementById('operation');
+        
+        // 更新显示
+        function updateDisplay() {
+            displayElement.textContent = currentInput;
+            operationElement.textContent = operationExpression;
+        }
+        
+        // 输入数字
+        function inputDigit(digit) {
+            if (isCalculated) {
+                currentInput = String(digit);
+                operationExpression = '';
+                isCalculated = false;
+            } else {
+                currentInput = currentInput === '0' ? String(digit) : currentInput + digit;
+            }
+            updateDisplay();
+        }
+        
+        // 输入小数点
+        function inputDecimal() {
+            if (isCalculated) {
+                currentInput = '0.';
+                operationExpression = '';
+                isCalculated = false;
+            } else if (!currentInput.includes('.')) {
+                currentInput += '.';
+            }
+            updateDisplay();
+        }
+        
+        // 输入运算符
+        function inputOperator(operator) {
+            if (isCalculated) {
+                operationExpression = currentInput + operator;
+                isCalculated = false;
+            } else {
+                operationExpression += currentInput + operator;
+            }
+            currentInput = '0';
+            updateDisplay();
+        }
+        
+        // 输入科学函数
+        function inputFunction(func) {
+            const value = parseFloat(currentInput);
+            
+            switch(func) {
+                case 'sin':
+                    currentInput = Math.sin(value * Math.PI / 180).toFixed(6);
+                    operationExpression = `sin(${value})`;
+                    break;
+                case 'cos':
+                    currentInput = Math.cos(value * Math.PI / 180).toFixed(6);
+                    operationExpression = `cos(${value})`;
+                    break;
+                case 'tan':
+                    currentInput = Math.tan(value * Math.PI / 180).toFixed(6);
+                    operationExpression = `tan(${value})`;
+                    break;
+                case '√':
+                    if (value >= 0) {
+                        currentInput = Math.sqrt(value).toString();
+                        operationExpression = `√(${value})`;
+                    } else {
+                        currentInput = 'Error';
+                    }
+                    break;
+                case 'π':
+                    currentInput = Math.PI.toString().slice(0, 10);
+                    operationExpression = 'π';
+                    break;
+                case '^':
+                    operationExpression = currentInput + '^';
+                    currentInput = '0';
+                    break;
+                case '1/x':
+                    if (value !== 0) {
+                        currentInput = (1 / value).toString();
+                        operationExpression = `1/(${value})`;
+                    } else {
+                        currentInput = 'Error';
+                    }
+                    break;
+                case '±':
+                    currentInput = currentInput.startsWith('-') ? 
+                        currentInput.substring(1) : '-' + currentInput;
+                    break;
+            }
+            
+            isCalculated = false;
+            updateDisplay();
+        }
+        
+        // 删除最后一位
+        function backspace() {
+            if (currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+        
+        // 清除所有
+        function clearAll() {
+            currentInput = '0';
+            operationExpression = '';
+            updateDisplay();
+        }
+        
+        // 计算表达式
+        function calculate() {
+            if (operationExpression === '') return;
+            
+            // 构建完整表达式
+            let expression = operationExpression + currentInput;
+            
+            // 替换符号
+            expression = expression
+                .replace(/÷/g, '/')
+                .replace(/×/g, '*')
+                .replace(/\^/g, '**')
+                //.replace(/%/g, '*0.01');
+            
+            try {
+                // 安全评估表达式
+                currentInput = eval(expression).toString();
+                operationExpression = expression + '=';
+                isCalculated = true;
+            } catch (e) {
+                currentInput = 'Error';
+                operationExpression = '';
+            }
+            updateDisplay();
+        }
+        
+        // 初始化
+        updateDisplay();
+    </script>
+</body>
+</html>
